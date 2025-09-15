@@ -1,131 +1,910 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="./简历.css">
-    <link rel="stylesheet" href="https://cdn.staticfile.net/font-awesome/6.4.2/css/all.min.css">
+    <title>寝室卫生记录系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        neutral: '#64748B',
+                        light: '#F1F5F9',
+                        dark: '#1E293B'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-soft {
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            }
+            .transition-custom {
+                transition: all 0.3s ease;
+            }
+        }
+    </style>
 </head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-md fixed w-full top-0 z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-home text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-primary">寝室卫生记录</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-list-alt mr-1"></i>记录列表
+                </a>
+                <a href="#" class="text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-bar-chart mr-1"></i>统计分析
+                </a>
+                <a href="#" class="text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-cog mr-1"></i>设置
+                </a>
+            </div>
+            
+            <button class="md:hidden text-neutral text-xl" id="mobile-menu-button">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white border-t" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-list-alt mr-2"></i>记录列表
+                </a>
+                <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-bar-chart mr-2"></i>统计分析
+                </a>
+                <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium">
+                    <i class="fa fa-cog mr-2"></i>设置
+                </a>
+            </div>
+        </div>
+    </header>
 
-<body>
-
-    <div class="A4-container">
-        <header>
-            <div class="left">
-                <div class="major">
-                    <div class="name">代双遥</div>
-                    <div class="position">应聘职位：后端开发</div>
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 页面标题 -->
+        <div class="text-center mb-10">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark mb-2">寝室卫生清洁记录</h2>
+            <p class="text-neutral max-w-2xl mx-auto">记录和管理寝室内的各项清洁工作，保持良好的居住环境</p>
+        </div>
+        
+        <!-- 快速添加按钮 -->
+        <div class="flex justify-center mb-8">
+            <button id="add-record-btn" class="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-custom flex items-center">
+                <i class="fa fa-plus-circle mr-2"></i>添加新记录
+            </button>
+        </div>
+        
+        <!-- 筛选区域 -->
+        <div class="bg-white rounded-xl shadow-soft p-5 mb-8 transition-custom hover:shadow-lg">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fa fa-filter text-primary mr-2"></i>筛选条件
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- 日期筛选 -->
+                <div>
+                    <label for="date-filter" class="block text-sm font-medium text-neutral mb-1">日期范围</label>
+                    <select id="date-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+                        <option value="week">最近1周</option>
+                        <option value="month">最近1个月</option>
+                        <option value="quarter">最近3个月</option>
+                        <option value="all">全部记录</option>
+                    </select>
                 </div>
-                <div class="minor">
-                    <div class="line">
-                        <div class="gender">性别：男</div>
-                        <div class="phone">电话：15696363644</div>
-                        <div class="email">邮箱：seniorsy.kualk@gmail.com</div>
+                
+                <!-- 项目筛选 -->
+                <div>
+                    <label for="item-filter" class="block text-sm font-medium text-neutral mb-1">清洁项目</label>
+                    <select id="item-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+                        <option value="all">全部项目</option>
+                        <option value="floor">地面清洁</option>
+                        <option value="window">窗户清洁</option>
+                        <option value="toilet">卫生间</option>
+                        <option value="desk">书桌整理</option>
+                        <option value="trash">垃圾清理</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                
+                <!-- 室员筛选 -->
+                <div>
+                    <label for="member-filter" class="block text-sm font-medium text-neutral mb-1">室员</label>
+                    <select id="member-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+                        <option value="all">全部室员</option>
+                        <option value="member1">张三</option>
+                        <option value="member2">李四</option>
+                        <option value="member3">王五</option>
+                        <option value="member4">赵六</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button id="reset-filter" class="text-neutral hover:text-dark transition-custom font-medium">
+                    <i class="fa fa-refresh mr-1"></i>重置筛选
+                </button>
+            </div>
+        </div>
+        
+        <!-- 记录表格 -->
+        <div class="bg-white rounded-xl shadow-soft overflow-hidden transition-custom hover:shadow-lg">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-light">
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">日期</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">室员</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">清洁项目</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">完成情况</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">备注</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-neutral">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-table-body">
+                        <!-- 表格内容将通过JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 空状态 -->
+            <div id="empty-state" class="py-16 text-center hidden">
+                <i class="fa fa-folder-open-o text-5xl text-gray-300 mb-4"></i>
+                <p class="text-neutral text-lg">暂无记录</p>
+                <p class="text-gray-400 mt-2">点击"添加新记录"按钮创建第一条记录</p>
+            </div>
+            
+            <!-- 分页 -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                <div class="text-sm text-neutral">
+                    显示 <span id="showing-range">1-5</span> 条，共 <span id="total-records">0</span> 条
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prev-page" class="px-3 py-1 border border-gray-300 rounded hover:bg-light transition-custom disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <button id="next-page" class="px-3 py-1 border border-gray-300 rounded hover:bg-light transition-custom disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计图表 -->
+        <div class="mt-10 bg-white rounded-xl shadow-soft p-5 transition-custom hover:shadow-lg">
+            <h3 class="text-lg font-semibold mb-6 flex items-center">
+                <i class="fa fa-bar-chart text-primary mr-2"></i>清洁统计
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 室员贡献统计 -->
+                <div>
+                    <h4 class="text-sm font-medium text-neutral mb-3">室员清洁次数统计</h4>
+                    <div class="h-64">
+                        <canvas id="member-chart"></canvas>
                     </div>
-                    <div class="line">
-                        <div class="github">Github：<a href="">github.com/Kualk4410</a></div>
-                        <div class="blog">个人博客：<a href="">www.blog.com</a></div>
+                </div>
+                
+                <!-- 项目分布统计 -->
+                <div>
+                    <h4 class="text-sm font-medium text-neutral mb-3">清洁项目分布</h4>
+                    <div class="h-64">
+                        <canvas id="item-chart"></canvas>
                     </div>
                 </div>
             </div>
-
-            <div class="right">
-                <img src="./证件照 (白底).jpg" class="avatar">
-            </div>
-        </header>
-
-        <section>
-            <h6><span>教育背景</span></h6>
-            <div class="content">
-                <ul>
-                    <li class="edu-item">
-                        <span class="sch-time">2024.09 - 2028.05</span>
-                        <span class="school">西南大学（211）</span>
-                        <span class="major">软件工程（中外合作办学）</span>
-                        <span class="degree">本科</span>
-                    </li>
-
-                    <li class="edu-item">
-                        <span class="sch-time">2024.09 - 2028.05</span>
-                        <span class="school">西学（211）</span>
-                        <span class="major">软工</span>
-                        <span class="degree">本科</span>
-                    </li>
-                </ul>
-            </div>
-        </section>
-
-        <section>
-            <h6><span>专业技能</span></h6>
-            <div class="content">
-                <ul>
-                    <li><i class="fa-solid fa-microchip"></i>熟悉常见的数据结构：数组、链表、栈、队列、二叉树等；</li>
-                    <li><i class="fa-solid fa-microchip"></i>熟悉常见的算法：排序、二分法、滑动窗口、递归、回溯、动态规划</li>
-                    <li><i class="fa-solid fa-microchip"></i>精通HTML、CSS、NodeJS、VUE</li>
-                    <li><i class="fa-solid fa-microchip"></i>精通C++、Java、Python</li>
-                    <li><i class="fa-solid fa-microchip"></i>精通MySQL、Redis、MongoDB、Linux、Git</li>
-                    <li><i class="fa-solid fa-microchip"></i>精通JS逆向</li>
-                </ul>
-            </div>
-        </section>
-
-        <section>
-            <h6><span>项目经验</span></h6>
-            <div class="content">
-                <div class="project-item">
-                    <h5>
-                        <div class="left">(1)2025-2026</div>
-                        <div class="right">
-                            <span>开发者</span>
-                            <span>个人博客网站</span>
-                        </div>
-                    </h5>
-                    <div class="tech-stack">应用技术：C++</div>
-                    <div class="proj-intro">项目介绍：nb</div>
-                    <div class="my-task">主要工作：实现</div>
-                </div>
-
-                <div class="project-item">
-                    <h5>
-                        <div class="left">(1)2025-2026</div>
-                        <div class="right">
-                            <span>开发者</span>
-                            <span>个人博客网站</span>
-                        </div>
-                    </h5>
-                    <div class="tech-stack">应用技术：Java</div>
-                    <div class="proj-intro">项目介绍：nb</div>
-                    <div class="my-task">主要工作：实现</div>
-                </div>
-
-                <div class="project-item">
-                    <h5>
-                        <div class="left">(1)2025-2026</div>
-                        <div class="right">
-                            <span>开发者</span>
-                            <span>个人博客网站</span>
-                        </div>
-                    </h5>
-                    <div class="tech-stack">应用技术：Python</div>
-                    <div class="proj-intro">项目介绍：nb</div>
-                    <div class="my-task">主要工作：实现</div>
+        </div>
+    </main>
+    
+    <!-- 添加/编辑记录的模态框 -->
+    <div id="record-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold" id="modal-title">添加新记录</h3>
+                    <button id="close-modal" class="text-neutral hover:text-dark transition-custom">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
                 </div>
             </div>
-        </section>
-
-        <section>
-            <h6><span>荣誉证书</span></h6>
-            <div class="content">
-                <ol>
-                    <li>英语六级考试 2025.08 </li>
-                    <li></li>
-                </ol>
-            </div>
-        </section>
+            
+            <form id="record-form" class="p-6 space-y-4">
+                <input type="hidden" id="record-id">
+                
+                <div>
+                    <label for="record-date" class="block text-sm font-medium text-neutral mb-1">日期</label>
+                    <input type="date" id="record-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" required>
+                </div>
+                
+                <div>
+                    <label for="record-member" class="block text-sm font-medium text-neutral mb-1">室员</label>
+                    <select id="record-member" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" required>
+                        <option value="">请选择室员</option>
+                        <option value="member1">张三</option>
+                        <option value="member2">李四</option>
+                        <option value="member3">王五</option>
+                        <option value="member4">赵六</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="record-item" class="block text-sm font-medium text-neutral mb-1">清洁项目</label>
+                    <select id="record-item" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" required>
+                        <option value="">请选择清洁项目</option>
+                        <option value="floor">地面清洁</option>
+                        <option value="window">窗户清洁</option>
+                        <option value="toilet">卫生间</option>
+                        <option value="desk">书桌整理</option>
+                        <option value="trash">垃圾清理</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="record-status" class="block text-sm font-medium text-neutral mb-1">完成情况</label>
+                    <select id="record-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" required>
+                        <option value="excellent">优秀</option>
+                        <option value="good" selected>良好</option>
+                        <option value="normal">一般</option>
+                        <option value="poor">需改进</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="record-notes" class="block text-sm font-medium text-neutral mb-1">备注（可选）</label>
+                    <textarea id="record-notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="添加备注信息..."></textarea>
+                </div>
+                
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" id="cancel-modal" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-light transition-custom">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存</button>
+                </div>
+            </form>
+        </div>
     </div>
+    
+    <!-- 确认删除模态框 -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+                    <i class="fa fa-trash text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">确认删除</h3>
+                <p class="text-neutral">你确定要删除这条记录吗？此操作无法撤销。</p>
+            </div>
+            
+            <div class="flex justify-center space-x-3 mt-6">
+                <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-light transition-custom">取消</button>
+                <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-custom">删除</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-dark text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+        <i id="notification-icon" class="fa fa-check-circle mr-2"></i>
+        <span id="notification-message"></span>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4 text-center text-neutral">
+            <p>&copy; 2023 寝室卫生记录系统 | 设计与开发</p>
+        </div>
+    </footer>
 
+    <script>
+        // 全局变量
+        let records = [];
+        let filteredRecords = [];
+        let currentPage = 1;
+        const recordsPerPage = 5;
+        let recordToDelete = null;
+        
+        // DOM元素
+        const recordsTableBody = document.getElementById('records-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const addRecordBtn = document.getElementById('add-record-btn');
+        const recordModal = document.getElementById('record-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModal = document.getElementById('close-modal');
+        const cancelModal = document.getElementById('cancel-modal');
+        const recordForm = document.getElementById('record-form');
+        const modalTitle = document.getElementById('modal-title');
+        const recordIdInput = document.getElementById('record-id');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDelete = document.getElementById('confirm-delete');
+        const cancelDelete = document.getElementById('cancel-delete');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const notificationIcon = document.getElementById('notification-icon');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const showingRangeText = document.getElementById('showing-range');
+        const totalRecordsText = document.getElementById('total-records');
+        const dateFilter = document.getElementById('date-filter');
+        const itemFilter = document.getElementById('item-filter');
+        const memberFilter = document.getElementById('member-filter');
+        const resetFilterBtn = document.getElementById('reset-filter');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navbar = document.getElementById('navbar');
+        
+        // 室员名称映射
+        const memberNames = {
+            'member1': '张三',
+            'member2': '李四',
+            'member3': '王五',
+            'member4': '赵六'
+        };
+        
+        // 清洁项目名称映射
+        const itemNames = {
+            'floor': '地面清洁',
+            'window': '窗户清洁',
+            'toilet': '卫生间',
+            'desk': '书桌整理',
+            'trash': '垃圾清理',
+            'other': '其他'
+        };
+        
+        // 完成情况映射及样式
+        const statusConfig = {
+            'excellent': { name: '优秀', class: 'bg-green-100 text-green-800' },
+            'good': { name: '良好', class: 'bg-blue-100 text-blue-800' },
+            'normal': { name: '一般', class: 'bg-yellow-100 text-yellow-800' },
+            'poor': { name: '需改进', class: 'bg-red-100 text-red-800' }
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 从localStorage加载记录
+            loadRecords();
+            
+            // 初始化图表
+            initCharts();
+            
+            // 设置今天的日期为默认值
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('record-date').value = today;
+            
+            // 事件监听
+            setupEventListeners();
+            
+            // 渲染记录
+            applyFilters();
+        });
+        
+        // 设置事件监听
+        function setupEventListeners() {
+            // 导航栏滚动效果
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    navbar.classList.add('py-2', 'shadow-lg');
+                    navbar.classList.remove('py-3', 'shadow-md');
+                } else {
+                    navbar.classList.add('py-3', 'shadow-md');
+                    navbar.classList.remove('py-2', 'shadow-lg');
+                }
+            });
+            
+            // 移动端菜单
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // 添加记录按钮
+            addRecordBtn.addEventListener('click', openAddModal);
+            
+            // 关闭模态框
+            closeModal.addEventListener('click', closeRecordModal);
+            cancelModal.addEventListener('click', closeRecordModal);
+            
+            // 提交表单
+            recordForm.addEventListener('submit', handleFormSubmit);
+            
+            // 删除相关
+            confirmDelete.addEventListener('click', handleDeleteConfirm);
+            cancelDelete.addEventListener('click', closeDeleteModal);
+            
+            // 分页
+            prevPageBtn.addEventListener('click', goToPrevPage);
+            nextPageBtn.addEventListener('click', goToNextPage);
+            
+            // 筛选
+            dateFilter.addEventListener('change', applyFilters);
+            itemFilter.addEventListener('change', applyFilters);
+            memberFilter.addEventListener('change', applyFilters);
+            resetFilterBtn.addEventListener('click', resetFilters);
+        }
+        
+        // 从localStorage加载记录
+        function loadRecords() {
+            const savedRecords = localStorage.getItem('dormCleaningRecords');
+            if (savedRecords) {
+                records = JSON.parse(savedRecords);
+                // 按日期降序排序
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else {
+                // 添加一些示例数据
+                records = [
+                    {
+                        id: generateId(),
+                        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        member: 'member1',
+                        item: 'floor',
+                        status: 'good',
+                        notes: '打扫了宿舍地面'
+                    },
+                    {
+                        id: generateId(),
+                        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        member: 'member2',
+                        item: 'toilet',
+                        status: 'excellent',
+                        notes: '彻底清洁了卫生间'
+                    },
+                    {
+                        id: generateId(),
+                        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        member: 'member3',
+                        item: 'trash',
+                        status: 'normal',
+                        notes: '清理了所有垃圾'
+                    }
+                ];
+                saveRecords();
+            }
+        }
+        
+        // 保存记录到localStorage
+        function saveRecords() {
+            localStorage.setItem('dormCleaningRecords', JSON.stringify(records));
+            updateCharts();
+        }
+        
+        // 生成唯一ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        
+        // 应用筛选条件
+        function applyFilters() {
+            const dateValue = dateFilter.value;
+            const itemValue = itemFilter.value;
+            const memberValue = memberFilter.value;
+            
+            // 计算日期范围
+            let dateRangeStart = null;
+            if (dateValue === 'week') {
+                dateRangeStart = new Date();
+                dateRangeStart.setDate(dateRangeStart.getDate() - 7);
+            } else if (dateValue === 'month') {
+                dateRangeStart = new Date();
+                dateRangeStart.setMonth(dateRangeStart.getMonth() - 1);
+            } else if (dateValue === 'quarter') {
+                dateRangeStart = new Date();
+                dateRangeStart.setMonth(dateRangeStart.getMonth() - 3);
+            }
+            
+            // 应用筛选
+            filteredRecords = records.filter(record => {
+                // 日期筛选
+                if (dateRangeStart) {
+                    const recordDate = new Date(record.date);
+                    if (recordDate < dateRangeStart) {
+                        return false;
+                    }
+                }
+                
+                // 项目筛选
+                if (itemValue !== 'all' && record.item !== itemValue) {
+                    return false;
+                }
+                
+                // 室员筛选
+                if (memberValue !== 'all' && record.member !== memberValue) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置页码并重新渲染
+            currentPage = 1;
+            renderRecords();
+        }
+        
+        // 重置筛选条件
+        function resetFilters() {
+            dateFilter.value = 'week';
+            itemFilter.value = 'all';
+            memberFilter.value = 'all';
+            applyFilters();
+        }
+        
+        // 渲染记录表格
+        function renderRecords() {
+            // 清空表格
+            recordsTableBody.innerHTML = '';
+            
+            // 计算分页
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, filteredRecords.length);
+            const currentRecords = filteredRecords.slice(startIndex, endIndex);
+            
+            // 更新分页信息
+            showingRangeText.textContent = filteredRecords.length > 0 
+                ? `${startIndex + 1}-${endIndex}` 
+                : '0-0';
+            totalRecordsText.textContent = filteredRecords.length;
+            
+            // 更新分页按钮状态
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            
+            // 显示空状态或表格内容
+            if (filteredRecords.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+            
+            // 添加记录行
+            currentRecords.forEach(record => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-custom';
+                
+                // 格式化日期显示
+                const formattedDate = formatDate(record.date);
+                
+                // 获取状态样式
+                const status = statusConfig[record.status];
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-sm">${formattedDate}</td>
+                    <td class="px-6 py-4 text-sm">${memberNames[record.member]}</td>
+                    <td class="px-6 py-4 text-sm">${itemNames[record.item]}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${status.class}">
+                            ${status.name}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-neutral">${record.notes || '-'}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <div class="flex space-x-2">
+                            <button class="text-primary hover:text-primary/80 transition-custom edit-btn" data-id="${record.id}">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="text-red-500 hover:text-red-600 transition-custom delete-btn" data-id="${record.id}">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                recordsTableBody.appendChild(row);
+            });
+            
+            // 为编辑和删除按钮添加事件监听
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    openEditModal(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    openDeleteModal(id);
+                });
+            });
+        }
+        
+        // 格式化日期显示
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        
+        // 打开添加记录模态框
+        function openAddModal() {
+            modalTitle.textContent = '添加新记录';
+            recordForm.reset();
+            recordIdInput.value = '';
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('record-date').value = today;
+            
+            openRecordModal();
+        }
+        
+        // 打开编辑记录模态框
+        function openEditModal(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+            
+            modalTitle.textContent = '编辑记录';
+            recordIdInput.value = record.id;
+            document.getElementById('record-date').value = record.date;
+            document.getElementById('record-member').value = record.member;
+            document.getElementById('record-item').value = record.item;
+            document.getElementById('record-status').value = record.status;
+            document.getElementById('record-notes').value = record.notes || '';
+            
+            openRecordModal();
+        }
+        
+        // 打开记录模态框
+        function openRecordModal() {
+            recordModal.classList.remove('hidden');
+            // 触发动画
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        // 关闭记录模态框
+        function closeRecordModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                recordModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // 处理表单提交
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const id = recordIdInput.value;
+            const date = document.getElementById('record-date').value;
+            const member = document.getElementById('record-member').value;
+            const item = document.getElementById('record-item').value;
+            const status = document.getElementById('record-status').value;
+            const notes = document.getElementById('record-notes').value.trim();
+            
+            if (id) {
+                // 更新现有记录
+                const index = records.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    records[index] = { ...records[index], date, member, item, status, notes };
+                    showNotification('记录已更新', 'success');
+                }
+            } else {
+                // 添加新记录
+                const newRecord = {
+                    id: generateId(),
+                    date,
+                    member,
+                    item,
+                    status,
+                    notes
+                };
+                records.unshift(newRecord); // 添加到开头
+                showNotification('记录已添加', 'success');
+            }
+            
+            // 保存并重新渲染
+            records.sort((a, b) => new Date(b.date) - new Date(a.date));
+            saveRecords();
+            applyFilters();
+            closeRecordModal();
+        }
+        
+        // 打开删除模态框
+        function openDeleteModal(id) {
+            recordToDelete = id;
+            deleteModal.classList.remove('hidden');
+        }
+        
+        // 关闭删除模态框
+        function closeDeleteModal() {
+            recordToDelete = null;
+            deleteModal.classList.add('hidden');
+        }
+        
+        // 处理删除确认
+        function handleDeleteConfirm() {
+            if (!recordToDelete) return;
+            
+            // 从数组中移除记录
+            records = records.filter(r => r.id !== recordToDelete);
+            
+            // 保存并重新渲染
+            saveRecords();
+            applyFilters();
+            closeDeleteModal();
+            showNotification('记录已删除', 'success');
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            
+            // 设置图标
+            if (type === 'success') {
+                notificationIcon.className = 'fa fa-check-circle mr-2 text-green-400';
+            } else if (type === 'error') {
+                notificationIcon.className = 'fa fa-exclamation-circle mr-2 text-red-400';
+            }
+            
+            // 显示通知
+            notification.classList.remove('translate-y-20', 'opacity-0');
+            notification.classList.add('translate-y-0', 'opacity-100');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                notification.classList.remove('translate-y-0', 'opacity-100');
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+        
+        // 分页控制
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderRecords();
+            }
+        }
+        
+        function goToNextPage() {
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderRecords();
+            }
+        }
+        
+        // 初始化图表
+        function initCharts() {
+            // 室员统计图表
+            const memberCtx = document.getElementById('member-chart').getContext('2d');
+            window.memberChart = new Chart(memberCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.values(memberNames),
+                    datasets: [{
+                        label: '清洁次数',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 项目分布图表
+            const itemCtx = document.getElementById('item-chart').getContext('2d');
+            window.itemChart = new Chart(itemCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.values(itemNames),
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(6, 182, 212, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%'
+                }
+            });
+            
+            // 更新图表数据
+            updateCharts();
+        }
+        
+        // 更新图表数据
+        function updateCharts() {
+            if (!window.memberChart || !window.itemChart) return;
+            
+            // 统计室员清洁次数
+            const memberCounts = {
+                'member1': 0,
+                'member2': 0,
+                'member3': 0,
+                'member4': 0
+            };
+            
+            // 统计项目次数
+            const itemCounts = {
+                'floor': 0,
+                'window': 0,
+                'toilet': 0,
+                'desk': 0,
+                'trash': 0,
+                'other': 0
+            };
+            
+            // 计算统计数据
+            records.forEach(record => {
+                if (memberCounts.hasOwnProperty(record.member)) {
+                    memberCounts[record.member]++;
+                }
+                if (itemCounts.hasOwnProperty(record.item)) {
+                    itemCounts[record.item]++;
+                }
+            });
+            
+            // 更新室员图表
+            window.memberChart.data.datasets[0].data = [
+                memberCounts.member1,
+                memberCounts.member2,
+                memberCounts.member3,
+                memberCounts.member4
+            ];
+            window.memberChart.update();
+            
+            // 更新项目图表
+            window.itemChart.data.datasets[0].data = [
+                itemCounts.floor,
+                itemCounts.window,
+                itemCounts.toilet,
+                itemCounts.desk,
+                itemCounts.trash,
+                itemCounts.other
+            ];
+            window.itemChart.update();
+        }
+    </script>
 </body>
-
 </html>
