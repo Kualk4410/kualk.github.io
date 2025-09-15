@@ -59,7 +59,7 @@
                 <a href="#" class="text-neutral hover:text-primary transition-custom font-medium">
                     <i class="fa fa-bar-chart mr-1"></i>统计分析
                 </a>
-                <a href="#" class="text-neutral hover:text-primary transition-custom font-medium">
+                <a href="#" class="text-neutral hover:text-primary transition-custom font-medium" id="settings-link">
                     <i class="fa fa-cog mr-1"></i>设置
                 </a>
             </div>
@@ -78,7 +78,7 @@
                 <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium">
                     <i class="fa fa-bar-chart mr-2"></i>统计分析
                 </a>
-                <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium">
+                <a href="#" class="py-2 text-neutral hover:text-primary transition-custom font-medium" id="mobile-settings-link">
                     <i class="fa fa-cog mr-2"></i>设置
                 </a>
             </div>
@@ -87,6 +87,23 @@
 
     <!-- 主内容区 -->
     <main class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 配置提示（首次使用时显示） -->
+        <div id="config-alert" class="bg-blue-50 border-l-4 border-primary p-4 mb-8 hidden">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fa fa-info-circle text-primary"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">请先完成GitHub配置，以便保存和同步记录数据。</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <button class="inline-flex text-blue-500 hover:text-blue-700" id="close-config-alert">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- 页面标题 -->
         <div class="text-center mb-10">
             <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark mb-2">寝室卫生清洁记录</h2>
@@ -95,7 +112,7 @@
         
         <!-- 快速添加按钮 -->
         <div class="flex justify-center mb-8">
-            <button id="add-record-btn" class="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-custom flex items-center">
+            <button id="add-record-btn" class="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-custom flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <i class="fa fa-plus-circle mr-2"></i>添加新记录
             </button>
         </div>
@@ -152,8 +169,24 @@
             </div>
         </div>
         
+        <!-- 加载状态 -->
+        <div id="loading-state" class="bg-white rounded-xl shadow-soft p-16 text-center hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p class="text-neutral">加载记录中...</p>
+        </div>
+        
+        <!-- 错误状态 -->
+        <div id="error-state" class="bg-white rounded-xl shadow-soft p-16 text-center hidden">
+            <i class="fa fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+            <p class="text-neutral text-lg mb-2">加载失败</p>
+            <p class="text-gray-400 mb-4" id="error-message">无法获取记录数据，请稍后重试</p>
+            <button id="retry-load" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">
+                重试
+            </button>
+        </div>
+        
         <!-- 记录表格 -->
-        <div class="bg-white rounded-xl shadow-soft overflow-hidden transition-custom hover:shadow-lg">
+        <div class="bg-white rounded-xl shadow-soft overflow-hidden transition-custom hover:shadow-lg hidden" id="records-container">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
@@ -196,7 +229,7 @@
         </div>
         
         <!-- 统计图表 -->
-        <div class="mt-10 bg-white rounded-xl shadow-soft p-5 transition-custom hover:shadow-lg">
+        <div class="mt-10 bg-white rounded-xl shadow-soft p-5 transition-custom hover:shadow-lg hidden" id="charts-container">
             <h3 class="text-lg font-semibold mb-6 flex items-center">
                 <i class="fa fa-bar-chart text-primary mr-2"></i>清洁统计
             </h3>
@@ -220,6 +253,49 @@
             </div>
         </div>
     </main>
+    
+    <!-- GitHub配置模态框 -->
+    <div id="config-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="config-modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">GitHub配置</h3>
+                    <button id="close-config-modal" class="text-neutral hover:text-dark transition-custom">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="config-form" class="p-6 space-y-4">
+                <div>
+                    <label for="github-token" class="block text-sm font-medium text-neutral mb-1">Personal Access Token</label>
+                    <input type="password" id="github-token" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="ghp_..." required>
+                    <p class="mt-1 text-xs text-gray-500">需要拥有仓库写入权限的token，至少包含repo权限</p>
+                </div>
+                
+                <div>
+                    <label for="github-owner" class="block text-sm font-medium text-neutral mb-1">仓库所有者</label>
+                    <input type="text" id="github-owner" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="用户名或组织名" required>
+                </div>
+                
+                <div>
+                    <label for="github-repo" class="block text-sm font-medium text-neutral mb-1">仓库名称</label>
+                    <input type="text" id="github-repo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" placeholder="仓库名" required>
+                </div>
+                
+                <div>
+                    <label for="github-filepath" class="block text-sm font-medium text-neutral mb-1">JSON文件路径</label>
+                    <input type="text" id="github-filepath" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom" value="data.json" required>
+                    <p class="mt-1 text-xs text-gray-500">存储数据的JSON文件路径，默认为data.json</p>
+                </div>
+                
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" id="cancel-config" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-light transition-custom">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">保存配置</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <!-- 添加/编辑记录的模态框 -->
     <div id="record-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
@@ -306,6 +382,27 @@
         </div>
     </div>
     
+    <!-- 操作状态提示 -->
+    <div id="operation-status" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+            <div id="operation-loading" class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4 hidden"></div>
+            <div id="operation-success" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-4 hidden">
+                <i class="fa fa-check text-green-500 text-xl"></i>
+            </div>
+            <div id="operation-error" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4 hidden">
+                <i class="fa fa-times text-red-500 text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2" id="operation-title">保存中...</h3>
+            <p class="text-neutral" id="operation-message">正在保存你的更改，请稍候...</p>
+            
+            <div class="mt-6 hidden" id="operation-actions">
+                <button id="operation-retry" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-custom">
+                    重试
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- 通知提示 -->
     <div id="notification" class="fixed bottom-4 right-4 bg-dark text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
         <i id="notification-icon" class="fa fa-check-circle mr-2"></i>
@@ -315,7 +412,7 @@
     <!-- 页脚 -->
     <footer class="bg-white border-t border-gray-200 py-6">
         <div class="container mx-auto px-4 text-center text-neutral">
-            <p>&copy; 2023 寝室卫生记录系统 | 设计与开发</p>
+            <p>&copy; 2023 寝室卫生记录系统 | 基于GitHub API</p>
         </div>
     </footer>
 
@@ -326,6 +423,8 @@
         let currentPage = 1;
         const recordsPerPage = 5;
         let recordToDelete = null;
+        let githubConfig = null;
+        let fileSha = null; // 用于GitHub API的文件SHA
         
         // DOM元素
         const recordsTableBody = document.getElementById('records-table-body');
@@ -355,6 +454,29 @@
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
         const navbar = document.getElementById('navbar');
+        const configAlert = document.getElementById('config-alert');
+        const closeConfigAlert = document.getElementById('close-config-alert');
+        const settingsLink = document.getElementById('settings-link');
+        const mobileSettingsLink = document.getElementById('mobile-settings-link');
+        const configModal = document.getElementById('config-modal');
+        const configModalContent = document.getElementById('config-modal-content');
+        const closeConfigModal = document.getElementById('close-config-modal');
+        const cancelConfig = document.getElementById('cancel-config');
+        const configForm = document.getElementById('config-form');
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const errorMessage = document.getElementById('error-message');
+        const retryLoad = document.getElementById('retry-load');
+        const recordsContainer = document.getElementById('records-container');
+        const chartsContainer = document.getElementById('charts-container');
+        const operationStatus = document.getElementById('operation-status');
+        const operationLoading = document.getElementById('operation-loading');
+        const operationSuccess = document.getElementById('operation-success');
+        const operationError = document.getElementById('operation-error');
+        const operationTitle = document.getElementById('operation-title');
+        const operationMessage = document.getElementById('operation-message');
+        const operationActions = document.getElementById('operation-actions');
+        const operationRetry = document.getElementById('operation-retry');
         
         // 室员名称映射
         const memberNames = {
@@ -382,10 +504,14 @@
             'poor': { name: '需改进', class: 'bg-red-100 text-red-800' }
         };
         
+        // 当前操作（用于重试功能）
+        let currentOperation = null;
+        let currentOperationData = null;
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 从localStorage加载记录
-            loadRecords();
+            // 从localStorage加载GitHub配置
+            loadGithubConfig();
             
             // 初始化图表
             initCharts();
@@ -397,8 +523,13 @@
             // 事件监听
             setupEventListeners();
             
-            // 渲染记录
-            applyFilters();
+            // 如果有配置，加载记录；否则显示配置提示
+            if (githubConfig) {
+                loadRecords();
+            } else {
+                showConfigAlert();
+                openConfigModal();
+            }
         });
         
         // 设置事件监听
@@ -418,6 +549,26 @@
             mobileMenuButton.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
             });
+            
+            // 配置相关
+            settingsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openConfigModal();
+            });
+            
+            mobileSettingsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                mobileMenu.classList.add('hidden');
+                openConfigModal();
+            });
+            
+            closeConfigAlert.addEventListener('click', () => {
+                configAlert.classList.add('hidden');
+            });
+            
+            configForm.addEventListener('submit', handleConfigSubmit);
+            closeConfigModal.addEventListener('click', closeConfigModal);
+            cancelConfig.addEventListener('click', closeConfigModal);
             
             // 添加记录按钮
             addRecordBtn.addEventListener('click', openAddModal);
@@ -442,51 +593,244 @@
             itemFilter.addEventListener('change', applyFilters);
             memberFilter.addEventListener('change', applyFilters);
             resetFilterBtn.addEventListener('click', resetFilters);
+            
+            // 错误重试
+            retryLoad.addEventListener('click', loadRecords);
+            operationRetry.addEventListener('click', retryCurrentOperation);
         }
         
-        // 从localStorage加载记录
-        function loadRecords() {
-            const savedRecords = localStorage.getItem('dormCleaningRecords');
-            if (savedRecords) {
-                records = JSON.parse(savedRecords);
-                // 按日期降序排序
-                records.sort((a, b) => new Date(b.date) - new Date(a.date));
-            } else {
-                // 添加一些示例数据
-                records = [
-                    {
-                        id: generateId(),
-                        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        member: 'member1',
-                        item: 'floor',
-                        status: 'good',
-                        notes: '打扫了宿舍地面'
-                    },
-                    {
-                        id: generateId(),
-                        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        member: 'member2',
-                        item: 'toilet',
-                        status: 'excellent',
-                        notes: '彻底清洁了卫生间'
-                    },
-                    {
-                        id: generateId(),
-                        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        member: 'member3',
-                        item: 'trash',
-                        status: 'normal',
-                        notes: '清理了所有垃圾'
-                    }
-                ];
-                saveRecords();
+        // 加载GitHub配置
+        function loadGithubConfig() {
+            const savedConfig = localStorage.getItem('githubConfig');
+            if (savedConfig) {
+                githubConfig = JSON.parse(savedConfig);
+                // 填充配置表单
+                document.getElementById('github-token').value = githubConfig.token;
+                document.getElementById('github-owner').value = githubConfig.owner;
+                document.getElementById('github-repo').value = githubConfig.repo;
+                document.getElementById('github-filepath').value = githubConfig.filepath || 'data.json';
+                
+                // 启用功能按钮
+                addRecordBtn.disabled = false;
             }
         }
         
-        // 保存记录到localStorage
-        function saveRecords() {
-            localStorage.setItem('dormCleaningRecords', JSON.stringify(records));
-            updateCharts();
+        // 保存GitHub配置
+        function saveGithubConfig(config) {
+            githubConfig = config;
+            localStorage.setItem('githubConfig', JSON.stringify(config));
+            
+            // 启用功能按钮
+            addRecordBtn.disabled = false;
+        }
+        
+        // 处理配置提交
+        function handleConfigSubmit(e) {
+            e.preventDefault();
+            
+            const config = {
+                token: document.getElementById('github-token').value,
+                owner: document.getElementById('github-owner').value,
+                repo: document.getElementById('github-repo').value,
+                filepath: document.getElementById('github-filepath').value || 'data.json'
+            };
+            
+            // 保存配置
+            saveGithubConfig(config);
+            
+            // 关闭配置模态框
+            closeConfigModal();
+            
+            // 加载记录
+            loadRecords();
+            
+            // 显示通知
+            showNotification('配置已保存', 'success');
+        }
+        
+        // 显示配置提示
+        function showConfigAlert() {
+            configAlert.classList.remove('hidden');
+        }
+        
+        // 打开配置模态框
+        function openConfigModal() {
+            configModal.classList.remove('hidden');
+            // 触发动画
+            setTimeout(() => {
+                configModalContent.classList.remove('scale-95', 'opacity-0');
+                configModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        // 关闭配置模态框
+        function closeConfigModal() {
+            configModalContent.classList.remove('scale-100', 'opacity-100');
+            configModalContent.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                configModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // 显示操作状态
+        function showOperationStatus(type, title, message, showRetry = false) {
+            operationLoading.classList.add('hidden');
+            operationSuccess.classList.add('hidden');
+            operationError.classList.add('hidden');
+            operationActions.classList.add('hidden');
+            
+            if (type === 'loading') {
+                operationLoading.classList.remove('hidden');
+            } else if (type === 'success') {
+                operationSuccess.classList.remove('hidden');
+            } else if (type === 'error') {
+                operationError.classList.remove('hidden');
+                if (showRetry) {
+                    operationActions.classList.remove('hidden');
+                }
+            }
+            
+            operationTitle.textContent = title;
+            operationMessage.textContent = message;
+            
+            operationStatus.classList.remove('hidden');
+        }
+        
+        // 隐藏操作状态
+        function hideOperationStatus() {
+            operationStatus.classList.add('hidden');
+        }
+        
+        // 设置当前操作（用于重试）
+        function setCurrentOperation(operation, data) {
+            currentOperation = operation;
+            currentOperationData = data;
+        }
+        
+        // 重试当前操作
+        function retryCurrentOperation() {
+            if (currentOperation && typeof window[currentOperation] === 'function') {
+                window[currentOperation](currentOperationData);
+            }
+        }
+        
+        // 从GitHub加载记录
+        async function loadRecords() {
+            if (!githubConfig) return;
+            
+            // 显示加载状态
+            showLoadingState();
+            
+            try {
+                const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filepath}`;
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    // 如果文件不存在（404），初始化空数据
+                    if (response.status === 404) {
+                        records = [];
+                        fileSha = null;
+                        renderRecords();
+                        return;
+                    }
+                    
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // 保存文件SHA用于后续更新
+                fileSha = data.sha;
+                
+                // 解码内容
+                const content = atob(data.content);
+                records = JSON.parse(content);
+                
+                // 按日期降序排序
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // 渲染记录
+                applyFilters();
+                
+            } catch (error) {
+                console.error('加载记录失败:', error);
+                showErrorState(`加载失败: ${error.message}`);
+            }
+        }
+        
+        // 保存记录到GitHub
+        async function saveRecords(operation = 'save') {
+            if (!githubConfig) return;
+            
+            // 显示保存状态
+            showOperationStatus('loading', '保存中', '正在同步到GitHub，请稍候...');
+            setCurrentOperation('saveRecords', operation);
+            
+            try {
+                const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filepath}`;
+                
+                // 准备数据
+                const content = JSON.stringify(records, null, 2);
+                const encodedContent = btoa(content);
+                
+                // 提交信息
+                let commitMessage = '更新卫生记录';
+                if (operation === 'add') commitMessage = '添加新卫生记录';
+                if (operation === 'delete') commitMessage = '删除卫生记录';
+                if (operation === 'edit') commitMessage = '编辑卫生记录';
+                
+                const body = {
+                    message: commitMessage,
+                    content: encodedContent
+                };
+                
+                // 如果文件已存在，需要提供SHA
+                if (fileSha) {
+                    body.sha = fileSha;
+                }
+                
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                // 更新文件SHA
+                fileSha = data.content.sha;
+                
+                // 显示成功状态
+                showOperationStatus('success', '保存成功', '记录已成功同步到GitHub');
+                
+                // 2秒后隐藏状态提示
+                setTimeout(() => {
+                    hideOperationStatus();
+                }, 2000);
+                
+                // 更新图表
+                updateCharts();
+                
+            } catch (error) {
+                console.error('保存记录失败:', error);
+                showOperationStatus('error', '保存失败', error.message, true);
+            }
         }
         
         // 生成唯一ID
@@ -551,6 +895,9 @@
         
         // 渲染记录表格
         function renderRecords() {
+            // 隐藏加载和错误状态，显示表格
+            showRecordsContainer();
+            
             // 清空表格
             recordsTableBody.innerHTML = '';
             
@@ -628,6 +975,9 @@
                     openDeleteModal(id);
                 });
             });
+            
+            // 更新图表
+            updateCharts();
         }
         
         // 格式化日期显示
@@ -686,7 +1036,7 @@
         }
         
         // 处理表单提交
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
             
             const id = recordIdInput.value;
@@ -696,12 +1046,13 @@
             const status = document.getElementById('record-status').value;
             const notes = document.getElementById('record-notes').value.trim();
             
+            let operation = 'add';
             if (id) {
                 // 更新现有记录
                 const index = records.findIndex(r => r.id === id);
                 if (index !== -1) {
                     records[index] = { ...records[index], date, member, item, status, notes };
-                    showNotification('记录已更新', 'success');
+                    operation = 'edit';
                 }
             } else {
                 // 添加新记录
@@ -714,12 +1065,13 @@
                     notes
                 };
                 records.unshift(newRecord); // 添加到开头
-                showNotification('记录已添加', 'success');
             }
             
-            // 保存并重新渲染
+            // 排序并保存
             records.sort((a, b) => new Date(b.date) - new Date(a.date));
-            saveRecords();
+            await saveRecords(operation);
+            
+            // 重新渲染
             applyFilters();
             closeRecordModal();
         }
@@ -737,17 +1089,16 @@
         }
         
         // 处理删除确认
-        function handleDeleteConfirm() {
+        async function handleDeleteConfirm() {
             if (!recordToDelete) return;
             
             // 从数组中移除记录
             records = records.filter(r => r.id !== recordToDelete);
             
             // 保存并重新渲染
-            saveRecords();
+            await saveRecords('delete');
             applyFilters();
             closeDeleteModal();
-            showNotification('记录已删除', 'success');
         }
         
         // 显示通知
@@ -786,6 +1137,31 @@
                 currentPage++;
                 renderRecords();
             }
+        }
+        
+        // 显示加载状态
+        function showLoadingState() {
+            loadingState.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            recordsContainer.classList.add('hidden');
+            chartsContainer.classList.add('hidden');
+        }
+        
+        // 显示错误状态
+        function showErrorState(message) {
+            errorMessage.textContent = message;
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+            recordsContainer.classList.add('hidden');
+            chartsContainer.classList.add('hidden');
+        }
+        
+        // 显示记录容器
+        function showRecordsContainer() {
+            loadingState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            recordsContainer.classList.remove('hidden');
+            chartsContainer.classList.remove('hidden');
         }
         
         // 初始化图表
@@ -848,9 +1224,6 @@
                     cutout: '65%'
                 }
             });
-            
-            // 更新图表数据
-            updateCharts();
         }
         
         // 更新图表数据
